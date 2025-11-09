@@ -20,7 +20,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-i53nt(y6j#0!^sya70^irz2c&qga=@wsna==-6$a*dm&gr#m3*'
+SECRET_KEY = 'django-insecure-i53nt(y6j#0!^sya70^irz2c&qga=@wsna==-6$a*dm&gr#m3*' # trocar e criar variável no .env antes de fazer deploy
+FIELD_ENCRYPTION_KEY = '4WbnKjkZ4skbsmDxF3B_w2gAGCzaBpsiLSF-cHg8fIU=' #chave secreta da criptografia do cpf (trocar e criar uma variável no .env antes de fazer deploy) (da pra criar uma nova chave com -> import secrets; print(secrets.token_urlsafe(32)))
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True

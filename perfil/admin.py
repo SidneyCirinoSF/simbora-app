@@ -15,8 +15,6 @@ class CustomUserAdmin(UserAdmin):
                 'first_name',
                 'last_name',
                 'data_nascimento',
-                'endereco',
-                'perfil',
             )
         }),
         ('Permissões', {
@@ -42,8 +40,6 @@ class CustomUserAdmin(UserAdmin):
                 'data_nascimento',
                 'password1',
                 'password2',
-                'endereco',
-                'perfil',
             ),
         }),
     )

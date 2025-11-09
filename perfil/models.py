@@ -4,6 +4,7 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.core.validators import RegexValidator
 from django.core.exceptions import ValidationError
+from encrypted_model_fields.fields import EncryptedCharField
 
 cpf_validator = RegexValidator(
     regex=r'^(\d{3}\.?\d{3}\.?\d{3}-?\d{2})$',
@@ -13,23 +14,7 @@ cpf_validator = RegexValidator(
 class Usuario(AbstractUser):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
-    data_nascimento = models.DateField() # - fazer um validador para esta bomba pra evitar erros tanto no superuser quanto no user padrao
-
-    endereco = models.ForeignKey(
-        'core.Endereco',
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='usuarios'
-    )
-
-    perfil = models.OneToOneField(
-        'perfil.Perfil',
-        on_delete=models.SET_NULL, #Pode trocar pra CASCADE se quiser deletar o usuário quando deletar o perfil
-        null=True,
-        blank=True,
-        related_name='usuario'
-    )
+    data_nascimento = models.DateField() # - fazer um validador/formatador para esta bomba pra evitar erros tanto no superuser quanto no user padrao
 
     email = models.EmailField(unique=True)
 
@@ -61,14 +46,18 @@ class Usuario(AbstractUser):
     
 class Perfil(models.Model):
     nome_social = models.CharField(max_length=100, blank=True, null=True)
-    cpf = models.CharField(
+
+    cpf = EncryptedCharField( #instalar django-encrypted-model-fields para garantir a segurança do cpf (pip install django-encrypted-model-fields, e lembrar de colocar uma chave secreta la no settings (antes do deploy tem q trocar e criar variavel no .env))
         max_length=14,
         unique=True,
         validators=[cpf_validator],
         help_text='Digite um CPF válido (com ou sem pontuação).'
     )
+
     foto_perfil = models.ImageField(upload_to='fotos_perfil/', blank=True, null=True) # precisa instalar a biblioteca Pillow (pip install Pillow)
+
     imagem_url = models.URLField(blank=True, null=True) # PEGA IMAGEM HOSPEDADA NA NET
+
     genero = models.CharField(
         max_length=30,
         choices=[
@@ -84,4 +73,20 @@ class Perfil(models.Model):
             ],
             blank=True,
             null=True
+    )
+
+    endereco = models.ForeignKey(
+        'core.Endereco',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='perfis'
+    )
+
+    usuario = models.OneToOneField(
+        'Usuario',
+        on_delete=models.SET_NULL, #Pode trocar pra CASCADE se quiser deletar o perfil quando deletar o usuario
+        null=True,
+        blank=True,
+        related_name='perfil'
     )
