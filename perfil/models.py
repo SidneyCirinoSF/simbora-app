@@ -33,8 +33,8 @@ class Usuario(AbstractUser):
         hoje = date.today()
         if self.data_nascimento > date.today():
             raise ValidationError("Data de nascimento inválida.")
-        if (hoje - self.data_nascimento).days < 13 * 365: #ajustar para a idade mínima definida nos requisitos pelo pessoal de produto
-            raise ValidationError("Usuário deve ter pelo menos 13 anos.")
+        if (hoje - self.data_nascimento).days < 18 * 365: #ajustar para a idade mínima definida nos requisitos pelo pessoal de produto
+            raise ValidationError("Usuário deve ter pelo menos 18 anos.")
 
     @property
     def idade(self):
@@ -50,6 +50,8 @@ class Perfil(models.Model):
     cpf = EncryptedCharField( #instalar django-encrypted-model-fields para garantir a segurança do cpf (pip install django-encrypted-model-fields, e lembrar de colocar uma chave secreta la no settings (antes do deploy tem q trocar e criar variavel no .env))
         max_length=14,
         unique=True,
+        blank=True,
+        null=True,
         validators=[cpf_validator],
         help_text='Digite um CPF válido (com ou sem pontuação).'
     )
@@ -58,13 +60,27 @@ class Perfil(models.Model):
 
     imagem_url = models.URLField(blank=True, null=True) # PEGA IMAGEM HOSPEDADA NA NET
 
+    descricao = models.TextField(
+        max_length=500,
+        blank=True,
+        null=True,
+    )
+
+    is_pcd = models.BooleanField(
+        default=False
+    )
+
+    neurodiversidade = models.BooleanField(
+        default=False
+    )
+
     genero = models.CharField(
         max_length=30,
         choices=[
-                ('MASCULINO', 'Masculino'),
-                ('FEMININO', 'Feminino'),
-                ('TRANS_MASCULINO', 'Transmasculino'),
-                ('TRANS_FEMININO', 'Transfeminino'),
+                ('HOMEM_CIS', 'Homem cis'),
+                ('MULHER_CIS', 'Mulher cis'),
+                ('HOMEM_TRANS', 'Homem Trans'),
+                ('MULHER_TRANS', 'Mulher Trans'),
                 ('NAO_BINARIO', 'Não-binário'),
                 ('AGENERO', 'Agênero'),
                 ('GENERO_FLUIDO', 'Gênero fluido'),
