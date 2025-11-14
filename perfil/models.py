@@ -1,7 +1,7 @@
 import uuid
 from datetime import date
 from django.db import models
-from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.models import AbstractUser, UserManager
 from django.core.validators import RegexValidator
 from django.core.exceptions import ValidationError
 from encrypted_model_fields.fields import EncryptedCharField
@@ -11,15 +11,35 @@ cpf_validator = RegexValidator(
     message='Digite um CPF válido (com ou sem pontuação).'
 )
 
+class CustomUserManager(UserManager):
+
+    def create_user(self, email, password=None, **extra_fields):
+        if not email:
+            raise ValueError("O usuário deve informar um email.")
+
+        email = self.normalize_email(email)
+
+        extra_fields.setdefault('username', email)
+
+        return super().create_user(email=email, password=password, **extra_fields)
+
+    def create_superuser(self, email, password=None, **extra_fields):
+
+        extra_fields.setdefault('is_staff', True)
+        extra_fields.setdefault('is_superuser', True)
+        extra_fields.setdefault('username', email)
+
+        return self.create_user(email, password, **extra_fields)
+
 class Usuario(AbstractUser):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-
-    data_nascimento = models.DateField() # - fazer um validador/formatador para esta bomba pra evitar erros tanto no superuser quanto no user padrao
 
     email = models.EmailField(unique=True)
 
     USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = ['username', 'first_name', 'last_name', 'data_nascimento']
+    REQUIRED_FIELDS = ['first_name', 'last_name']
+
+    objects = CustomUserManager()
 
     def __str__(self):
         return self.nome_completo or self.email
@@ -28,26 +48,11 @@ class Usuario(AbstractUser):
     def nome_completo(self): #retorna o nome completo a partir do first_name e last_name que já são nativos do django
         return f"{self.first_name} {self.last_name}".strip()
     
-    def clean(self): #valida data de nascimento
-        super().clean()
-        hoje = date.today()
-        if self.data_nascimento > date.today():
-            raise ValidationError("Data de nascimento inválida.")
-        if (hoje - self.data_nascimento).days < 18 * 365: #ajustar para a idade mínima definida nos requisitos pelo pessoal de produto
-            raise ValidationError("Usuário deve ter pelo menos 18 anos.")
-
-    @property
-    def idade(self):
-        hoje = date.today()
-        idade = hoje.year - self.data_nascimento.year
-        if (hoje.month, hoje.day) < (self.data_nascimento.month, self.data_nascimento.day): #se ainda n fez aniversario este ano, corrige com -1
-            idade -= 1
-        return idade
-    
+        
 class Perfil(models.Model):
     nome_social = models.CharField(max_length=100, blank=True, null=True)
 
-    cpf = EncryptedCharField( #instalar django-encrypted-model-fields para garantir a segurança do cpf (pip install django-encrypted-model-fields, e lembrar de colocar uma chave secreta la no settings (antes do deploy tem q trocar e criar variavel no .env))
+    cpf = EncryptedCharField( 
         max_length=14,
         unique=True,
         blank=True,
@@ -56,7 +61,7 @@ class Perfil(models.Model):
         help_text='Digite um CPF válido (com ou sem pontuação).'
     )
 
-    foto_perfil = models.ImageField(upload_to='fotos_perfil/', blank=True, null=True) # precisa instalar a biblioteca Pillow (pip install Pillow)
+    foto_perfil = models.ImageField(upload_to='fotos_perfil/', blank=True, null=True) 
 
     imagem_url = models.URLField(blank=True, null=True) # PEGA IMAGEM HOSPEDADA NA NET
 
@@ -106,3 +111,30 @@ class Perfil(models.Model):
         blank=True,
         related_name='perfil'
     )
+
+    data_nascimento = models.DateField()
+
+    def clean(self):
+        super().clean()
+        hoje = date.today()
+
+        # Se data_nascimento estiver vazia, não valida nada ainda
+        if not self.data_nascimento:
+            return
+
+        if self.data_nascimento > hoje:
+            raise ValidationError("Data de nascimento inválida.")
+
+        idade_dias = (hoje - self.data_nascimento).days
+        if idade_dias < 18 * 365:  # idade mínima
+            raise ValidationError("Usuário deve ter pelo menos 18 anos.")
+
+
+    @property
+    def idade(self):
+        hoje = date.today()
+        idade = hoje.year - self.data_nascimento.year
+        if (hoje.month, hoje.day) < (self.data_nascimento.month, self.data_nascimento.day): #se ainda n fez aniversario este ano, corrige com -1
+            idade -= 1
+        return idade
+

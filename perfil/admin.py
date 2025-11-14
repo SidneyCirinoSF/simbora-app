@@ -2,19 +2,17 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from .models import Usuario, Perfil
 
-
 @admin.register(Usuario)
 class CustomUserAdmin(UserAdmin):
     model = Usuario
 
-    # Campos que aparecem ao visualizar/editar um usuário
     fieldsets = (
         (None, {'fields': ('email', 'password')}),
         ('Informações pessoais', {
             'fields': (
                 'first_name',
                 'last_name',
-                'data_nascimento',
+                'username',
             )
         }),
         ('Permissões', {
@@ -29,7 +27,6 @@ class CustomUserAdmin(UserAdmin):
         ('Datas importantes', {'fields': ('last_login', 'date_joined')}),
     )
 
-    # Campos que aparecem ao criar um novo usuário
     add_fieldsets = (
         (None, {
             'classes': ('wide',),
@@ -37,23 +34,39 @@ class CustomUserAdmin(UserAdmin):
                 'email',
                 'first_name',
                 'last_name',
-                'data_nascimento',
                 'password1',
                 'password2',
             ),
         }),
     )
 
-    list_display = ('email', 'first_name', 'last_name', 'idade', 'is_staff')
+    list_display = ('email', 'first_name', 'last_name', 'is_staff')
     search_fields = ('email', 'first_name', 'last_name')
     ordering = ('email',)
-
-    def idade(self, obj):
-        return obj.idade
-    idade.short_description = 'Idade'
 
 
 @admin.register(Perfil)
 class PerfilAdmin(admin.ModelAdmin):
-    list_display = ('cpf', 'nome_social', 'genero')
-    search_fields = ('cpf', 'nome_social')
+    list_display = (
+        'usuario',
+        'nome_social',
+        'cpf',
+        'genero',
+        'data_nascimento',
+        'idade',
+    )
+
+    search_fields = (
+        'cpf',
+        'nome_social',
+        'usuario__email',
+        'usuario__first_name',
+        'usuario__last_name',
+    )
+
+    raw_id_fields = ('usuario', 'endereco')
+
+    def idade(self, obj):
+        return obj.idade
+
+    idade.short_description = 'Idade'

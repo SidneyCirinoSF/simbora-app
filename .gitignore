@@ -1,0 +1,51 @@
+# ===== PYTHON =====
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# ===== DJANGO =====
+db.sqlite3
+*.log
+
+# Static e media (caso venham a existir)
+static/
+staticfiles/
+media/
+
+# Migrations compiladas (mas mantém o __init__.py)
+*/migrations/*.py
+!*/migrations/__init__.py
+
+# ===== VIRTUALENV =====
+venv/
+.env/
+ENV/
+.venv/
+
+# ===== IDEs =====
+.vscode/
+.idea/
+
+# ===== SISTEMA OPERACIONAL =====
+.DS_Store
+Thumbs.db
+
+# ===== TESTES =====
+.coverage
+htmlcov/
+.pytest_cache/
+
+# ===== BUILD =====
+build/
+dist/
+*.egg-info/
+
+# .gitignore
+.env
+*.sqlite3
+venv/
+.venv/
+__pycache__/
+*.pyc
+.DS_Store
